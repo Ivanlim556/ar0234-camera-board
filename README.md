@@ -16,6 +16,12 @@ Designed by Lim Wei Quan (Gamuda internship, 2026). Board revision **2026-09-13*
 
 ## Design (before fabrication)
 
+EasyEDA Pro 3D view of the final design:
+
+| Top — sensor side (AR0234, lens-holder holes) | Bottom — components |
+|---|---|
+| ![3D top](design/3d-top-sensor-side.png) | ![3D bottom](design/3d-bottom-components.png) |
+
 Rendered from the exact Gerber files sent to JLCPCB (`fabrication/Gerber_ar0234-camera_2026-09-13.zip`, drawn with
 [gerbonara](https://gitlab.com/gerbolyze/gerbonara); solder mask coloured blue to match the boards that came back).
 
