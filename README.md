@@ -14,6 +14,18 @@ Designed by Lim Wei Quan (Gamuda internship, 2026). Board revision **2026-09-13*
 |---|---|
 | ![lens](photos/board-with-lens-on-pi5.jpeg) | ![bench](photos/bench-ar0234-with-vl53l5cx.jpeg) |
 
+## Design (before fabrication)
+
+Rendered from the exact Gerber files sent to JLCPCB (`fabrication/Gerber_ar0234-camera_2026-09-13.zip`, drawn with
+[gerbonara](https://gitlab.com/gerbolyze/gerbonara); solder mask coloured blue to match the boards that came back).
+
+| Top — sensor side (U1 AR0234, lens-holder holes) | Bottom — components (J1 ribbon, J2, regulators, clock, level shifter) |
+|---|---|
+| ![top render](design/render-top-sensor-side.png) | ![bottom render](design/render-bottom-components.png) |
+
+Designed in EasyEDA Pro (schematic → 4-layer PCB, DRC, one-click Gerber/BOM/CPL export). The bottom render is seen
+from below, as in the photo of the back.
+
 ## Files
 
 | File | What |
