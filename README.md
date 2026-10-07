@@ -82,7 +82,7 @@ change between boards). Each got the visual + short check first (C24/C21/C22/C23
 | Board | Chip ID | Stream | Mono picture | Result |
 |---|---|---|---|---|
 | 1 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ worked 2026-10-05 → 07 (10-min run clean) — ❌ **failed after a holder + lens swap**, see below |
-| 2 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — sharp with board 1's pre-focused holder + lens |
+| 2 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — sharp with board 1's pre-focused holder + lens; **main camera since 2026-10-07** |
 | 3 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
 | 4 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
 | 5 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
