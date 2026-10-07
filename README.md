@@ -83,3 +83,69 @@ GND at **J2 pin 3**.
 - **R7/R8 pull-ups** sit in parallel with the Pi's (~1.2 kΩ combined) — legal at 400 kHz.
 - **FLASH (J1 pin 18)** is a sensor output on a pin the Pi may also drive: tape contact 18 at the camera end, or use
   FLASH from J2 pin 1.
+
+## Further improvements (next revision)
+
+Lessons from bringing up two boards (October 2026), in order of impact.
+
+### 1. Centre the pixel array — not the package — under the lens
+
+The AR0234's light-sensitive area is **not in the middle of its package**. onsemi's package drawing (datasheet
+p. 24, note 12): *"Optical center relative to package center (X, Y) = (−1.271, −0.148) mm"* — the 1928 × 1208
+active array sits toward the **ball-A1 end** of the 9.995 mm package.
+
+| This revision (rev 2026-09-13) | X (mm) | Y (mm) |
+|---|---|---|
+| Lens-holder holes — midpoint = lens axis | 17.500 | 18.135 |
+| U1 package centre (pick-and-place) | 18.542 | 18.161 |
+| Package centre − lens axis | +1.042 | +0.026 |
+
+Depending on which end of U1 the A1 corner is, the pixel-array centre is either **≈0.23 mm** from the lens axis (the
+1.04 mm shift mostly cancels the 1.27 mm) or **≈2.3 mm** (they add). With the 4 mm lens, 1 mm of offset turns the
+view by ~14°: 0.23 mm ≈ 3° (≈50 px of the 1280-wide picture), 2.3 mm ≈ 30°. Camera-vs-distance-sensor tests on
+2026-10-05/07 agreed within 1–2 zones (mostly parallax), which fits the **small (~3°)** case — but a person
+"straight in front" still shows slightly off-centre.
+
+**Fix:** place U1 so the **optical centre** lands on the holder-hole midpoint: package centre = lens axis +
+(1.271, 0.148) mm rotated into the board frame, on the side **away from A1**. Check the A1 marker in the footprint
+against the datasheet top view before moving it, and confirm with a measurement (camera square to a wall, mark the
+point in line with the lens, see where it lands in the picture).
+
+### 2. Mark the ribbon direction on the board
+
+The first power-up failed (0 V on the board, `failed to read chip id`) only because the 22-pin ribbon was the wrong
+way round. Add silkscreen next to J1: **"contacts ↓ / blue stiffener up"** and a pin-1 arrow.
+
+### 3. Labelled test pads
+
+Bring-up used the 10 µF caps as probe points (C24 = 3V3, C21 = 2V8, C22 = 1V8, C23 = 1V2). Add labelled test pads
+for **3V3, 2V8, 1V8, 1V2, EXTCLK, GND** in one row along an edge.
+
+### 4. Fix the known signal issues
+
+- **TRIGGER:** 10 kΩ pull-down on J2 pin 2 (it floats today).
+- **MIPI pairs:** 0.127 mm traces for 100 Ω differential on this stack-up (0.120 mm today).
+- **FLASH:** don't route the sensor's FLASH output to J1 pin 18 (the Pi may drive CAM_IO1) — keep it on J2 only, or
+  add a 0 Ω/DNP link so contact 18 is open by default (no Kapton tape needed).
+
+### 5. Put the distance sensor on the camera board
+
+The VL53L5CX lives on a separate SATEL board with 9 jumper wires: they came loose three times in a week, and its
+position relative to the camera (beside it, turned 90°) needed a hand-tuned grid orientation and causes parallax at
+close range. A VL53L5CX footprint **right next to the lens**, same orientation as the sensor rows, sharing the
+board's 3V3/I²C (separate address 0x29) and one connector, would fix all three: no jumpers, fixed alignment,
+minimal parallax.
+
+### 6. Mechanics for the drone
+
+- Mounting holes for a rigid camera mount and **strain relief for the ribbon** (a loose ribbon gave
+  `Camera frontend has timed out` on 2026-10-06).
+- A lens-holder **lock** (thread-lock pad or set-screw holder) so vibration can't turn the focus.
+- Keep the same holder type across boards: a pre-focused holder + lens moved from board 1 to board 2 stayed sharp.
+
+### 7. Software notes that come from the hardware
+
+- The fitted mono part reports the **colour** chip ID `0x0A56`; until the driver learns the difference, the
+  `force_mono` patch stays (see `pi/ar0234/`).
+- The 35 ms power-up delay lives in a device-tree overlay. A supervisor that holds RESET_BAR low until +1V2 is good
+  would make the board independent of that overlay.
