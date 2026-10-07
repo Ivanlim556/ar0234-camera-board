@@ -1,6 +1,6 @@
 # AR0234 camera board (in-house)
 
-A 35 × 35 mm global-shutter **mono** camera board (**5 of 5 boards tested working**, 2026-10-07) for the drone, built around the onsemi **AR0234** (1920×1200,
+A 35 × 35 mm global-shutter **mono** camera board (**all 5 boards passed bring-up**, 2026-10-07; board 1 later damaged in a lens-holder swap) for the drone, built around the onsemi **AR0234** (1920×1200,
 MIPI CSI-2, 4 lanes). It plugs into the Raspberry Pi 5's CAM/DISP 0 with a 22-pin ribbon and is working since
 **2026-10-05** (1280×800 at 30 fps, ~180 ms glass to glass — see the main README and `docs/guide.html` 2.0).
 
@@ -81,14 +81,23 @@ change between boards). Each got the visual + short check first (C24/C21/C22/C23
 
 | Board | Chip ID | Stream | Mono picture | Result |
 |---|---|---|---|---|
-| 1 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — in use since 2026-10-05, lens focused, 10-min run clean |
+| 1 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ worked 2026-10-05 → 07 (10-min run clean) — ❌ **failed after a holder + lens swap**, see below |
 | 2 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — sharp with board 1's pre-focused holder + lens |
 | 3 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
 | 4 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
 | 5 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
 
-**5 of 5 boards working.** Every board reports the same chip ID (so the `force_mono` setting covers all of them),
+**5 of 5 boards passed bring-up.** Every board reports the same chip ID (so the `force_mono` setting covers all of them),
 gives a clean mono picture and streams without camera errors — the design and the assembly are consistent.
+
+**Board 1 after the holder swap (2026-10-07):** after its M12 holder was unscrewed and refitted for a different lens,
+board 1 stopped answering (`failed to read chip id`). Board 2 works on the same cable and CAM0, so it is the board.
+Measured with the camera power held on: **C24 3.3 V, C21 2.8 V, C22 1.8 V, C23 1.2 V — all rails correct**, so J1's
+power pins, the enable line and the regulators are fine; the sensor just doesn't answer on I²C. Suspects, most likely
+first: a cracked **U1 (BGA) solder ball** from board flex while the holder screws were tightened right around the
+sensor; a cracked joint on **Y1** (clock) or **U5** (I²C level shifter), both on the bottom side that was pressed onto
+the table; the reset line. Next checks: R17 ≈ 0.9 V (clock running), C14 = 1.8 V (reset released), R9/R10 = 1.8 V and
+R7/R8 = 3.3 V (I²C idle). All fine → U1's BGA joints (needs BGA reflow).
 
 ## Known limits of this revision
 
@@ -158,6 +167,12 @@ minimal parallax.
   `Camera frontend has timed out` on 2026-10-06).
 - A lens-holder **lock** (thread-lock pad or set-screw holder) so vibration can't turn the focus.
 - Keep the same holder type across boards: a pre-focused holder + lens moved from board 1 to board 2 stayed sharp.
+- **Never remove the holder to change lenses.** Unscrew only the lens from the holder. Board 1 stopped working
+  after its holder was taken off and screwed back on: the holder screws sit right around U1, so tightening them
+  flexes the board under the BGA, and the bottom side (J1, Y1, U5) was pressed onto the table. If a holder must come
+  off, support the board **flat on a firm surface directly under the sensor**, tighten the screws gently and evenly,
+  and power-test straight after. For the next revision: keep the holder screws away from U1 (or add stiffening /
+  more board area around it), and consider an underfill or corner-glue for the BGA.
 - **Specify the lens holder in the BOM** (part number + height). Board 2 first got a different holder that could
   not reach focus at any lens position — the board was fine, the holder height was wrong.
 - **Ribbon retention:** the camera stopped with `Camera frontend has timed out` twice (2026-10-06, and 2026-10-07
