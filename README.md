@@ -1,6 +1,6 @@
 # AR0234 camera board (in-house)
 
-A 35 × 35 mm global-shutter **mono** camera board for the drone, built around the onsemi **AR0234** (1920×1200,
+A 35 × 35 mm global-shutter **mono** camera board (**5 of 5 boards tested working**, 2026-10-07) for the drone, built around the onsemi **AR0234** (1920×1200,
 MIPI CSI-2, 4 lanes). It plugs into the Raspberry Pi 5's CAM/DISP 0 with a 22-pin ribbon and is working since
 **2026-10-05** (1280×800 at 30 fps, ~180 ms glass to glass — see the main README and `docs/guide.html` 2.0).
 
@@ -74,6 +74,22 @@ GND at **J2 pin 3**.
 3. Driver: Kurokesu `ar0234-rpi-dkms` + their libcamera (standard libcamera has no AR0234). Full steps: main README,
    "AR0234 setup (v2.0)".
 
+## Boards tested (2026-10-07)
+
+All five boards from the JLCPCB run were tested on the same Pi 5 (CAM0, same 22-pin ribbon, same software — no
+change between boards). Each got the visual + short check first (C24/C21/C22/C23 to GND), then power-on.
+
+| Board | Chip ID | Stream | Mono picture | Result |
+|---|---|---|---|---|
+| 1 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — in use since 2026-10-05, lens focused, 10-min run clean |
+| 2 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works — sharp with board 1's pre-focused holder + lens |
+| 3 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
+| 4 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
+| 5 | `0xa56` | 1280×800 @ 30 fps | ✅ | ✅ works |
+
+**5 of 5 boards working.** Every board reports the same chip ID (so the `force_mono` setting covers all of them),
+gives a clean mono picture and streams without camera errors — the design and the assembly are consistent.
+
 ## Known limits of this revision
 
 - **TRIGGER (J2 pin 2) has no pull-down** — it floats. Master mode (the default) ignores it; don't use
@@ -142,6 +158,11 @@ minimal parallax.
   `Camera frontend has timed out` on 2026-10-06).
 - A lens-holder **lock** (thread-lock pad or set-screw holder) so vibration can't turn the focus.
 - Keep the same holder type across boards: a pre-focused holder + lens moved from board 1 to board 2 stayed sharp.
+- **Specify the lens holder in the BOM** (part number + height). Board 2 first got a different holder that could
+  not reach focus at any lens position — the board was fine, the holder height was wrong.
+- **Ribbon retention:** the camera stopped with `Camera frontend has timed out` twice (2026-10-06, and 2026-10-07
+  while board 4 was handled while running). A connector with a stronger latch, an adhesive/clip strain relief next
+  to J1, or mounting holes that let the board be fixed so the ribbon never carries its weight would stop this.
 
 ### 7. Software notes that come from the hardware
 
