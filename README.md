@@ -157,7 +157,8 @@ for **3V3, 2V8, 1V8, 1V2, EXTCLK, GND** in one row along an edge.
 
 The VL53L5CX lives on a separate SATEL board with 9 jumper wires: they came loose three times in a week, and its
 position relative to the camera (beside it, turned 90°) needed a hand-tuned grid orientation and causes parallax at
-close range. A VL53L5CX footprint **right next to the lens**, same orientation as the sensor rows, sharing the
+close range (bench rig: **9.5 cm** beside the lens → ~2 zones off at 0.5 m before the software parallax correction
+`--tof-baseline` was added). A VL53L5CX footprint **right next to the lens**, same orientation as the sensor rows, sharing the
 board's 3V3/I²C (separate address 0x29) and one connector, would fix all three: no jumpers, fixed alignment,
 minimal parallax.
 
