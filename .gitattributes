@@ -1,0 +1,5 @@
+# Pi scripts, services and configs must keep Linux line endings
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.jpg binary
+*.png binary

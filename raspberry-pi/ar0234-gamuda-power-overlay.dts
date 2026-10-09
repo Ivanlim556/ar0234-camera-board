@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// GAmuda AR0234 camera board (35 x 35 mm, rev 2026-09-13) -- power-up timing.
+// PI 5 VERSION (2026-09-28). Original: AR0234cam_skematic_pcb_myeasyeda/ and
+// ar0234-handover/software/ -- identical to this except fragment@1 below.
+//
+// Applied on top of the stock Kurokesu ar0234 overlay:
+//
+//     dtoverlay=ar0234,4lane           (add ,cam0 when on the CAM0 connector)
+//     dtoverlay=ar0234-gamuda-power
+//
+// WHY THIS EXISTS
+// ---------------
+// On this board the Pi's CAM_GPIO (J1 pin 17, net EN_RAW) does not reset the
+// sensor.  It enables three on-board regulators through deliberate RC delays
+// so the rails come up in the order the AR0234 requires.  Nothing answers on
+// I2C until that whole sequence has finished.
+//
+//   EN_RAW rises
+//     -> +2V8   U2 LD39050,  EN direct                        ~0.5  ms
+//     -> +1V8   U3 LD39050,  R12 100k / C12 100n              ~3.4  ms
+//     -> EXTCLK Y1 24.000 MHz on +1V8, OE tied high           <13.4 ms
+//     -> +1V2   U4 TLV62568, R13 100k / C13 330n              ~15.6 ms
+//                            (14.9 ms RC + 0.7 ms soft-start)
+//     -> RESET_BAR released, R11 100k / C14 100n              ~15.4 ms
+//                            (RC referenced to +1V8; there is no reset GPIO)
+//
+// Worst case over R/C tolerance and the TLV62568 EN threshold spread is about
+// 25 ms.  35 ms is that plus margin.  The driver's own 6.2 ms post-reset wait
+// (AR0234_RESET_DELAY_MIN_US) runs on top, so the first I2C transaction lands
+// near 41 ms.
+//
+// Without this the driver waits only 6.2 ms and talks to a sensor still held
+// in reset.  That fails intermittently and reads like a bad I2C bus, not like
+// a timing problem -- which is the reason this file is worth its length.
+//
+// TUNING
+// ------
+// If first silicon shows the RC corners are tighter than assumed, trim it at
+// boot without recompiling (sets both connectors):
+//
+//     dtoverlay=ar0234-gamuda-power,delay-us=20000
+//
+// The cost of being generous is boot time only: the delay is paid on power-on
+// and on runtime-PM resume, and the driver's autosuspend is 1000 ms.
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	/*
+	 * On CM4, cam0_reg is a second label on cam1_reg, so one fragment was
+	 * enough.  On the Pi 5 (bcm2712-rpi-5-b) they are two separate nodes,
+	 * /cam0_reg and /cam1_reg -- one per camera connector -- so each gets
+	 * its own fragment and the board is covered on either connector.
+	 */
+	fragment@0 {
+		target = <&cam1_reg>;
+		cam1_timing: __overlay__ {
+			regulator-enable-ramp-delay = <35000>;	/* microseconds */
+		};
+	};
+
+	fragment@1 {
+		target = <&cam0_reg>;
+		cam0_timing: __overlay__ {
+			regulator-enable-ramp-delay = <35000>;	/* microseconds */
+		};
+	};
+
+	__overrides__ {
+		delay-us = <&cam1_timing>,"regulator-enable-ramp-delay:0",
+			   <&cam0_timing>,"regulator-enable-ramp-delay:0";
+	};
+};

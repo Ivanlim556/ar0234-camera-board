@@ -2,7 +2,8 @@
 
 A 35 × 35 mm global-shutter **mono** camera board (**all 5 boards passed bring-up**, 2026-10-07; board 1 later damaged in a lens-holder swap) for the drone, built around the onsemi **AR0234** (1920×1200,
 MIPI CSI-2, 4 lanes). It plugs into the Raspberry Pi 5's CAM/DISP 0 with a 22-pin ribbon and is working since
-**2026-10-05** (1280×800 at 30 fps, ~180 ms glass to glass — see the main README and `docs/guide.html` 2.0).
+**2026-10-05** (1280×800 at 30 fps, ~180 ms glass to glass). The system that uses it — Pi 5, Hailo-8L detection,
+distance sensor, MAVLink to the flight controller — lives in **[pi5-drone-vision](https://github.com/Ivanlim556/pi5-drone-vision)**.
 
 Designed by Lim Wei Quan (Gamuda internship, 2026). Board revision **2026-09-13**.
 
@@ -32,6 +33,18 @@ Rendered from the exact Gerber files sent to JLCPCB (`fabrication/Gerber_ar0234-
 Designed in EasyEDA Pro (schematic → 4-layer PCB, DRC, one-click Gerber/BOM/CPL export). The bottom render is seen
 from below, as in the photo of the back.
 
+## Using it on a Raspberry Pi 5 (short)
+
+1. Ribbon (22-pin, 0.5 mm) into **CAM/DISP 0**; bare contacts toward the pads at both ends (blue stiffener away from
+   the board at J1).
+2. Driver: Kurokesu `ar0234-rpi-dkms` + Kurokesu libcamera (same release as stock + AR0234).
+3. `raspberry-pi/ar0234-force-mono.patch` on the driver source, `options ar0234 force_mono=1`.
+4. Overlays: `dtoverlay=ar0234,4lane,cam0` + `dtoverlay=ar0234-gamuda-power` (compile the `.dts` with `dtc -@`).
+5. Check: `journalctl -k -b | grep "chip id"` → `Success reading chip id: 0xa56`; `rpicam-hello --list-cameras`
+   → `ar0234 [1920x1200 10-bit MONO]`.
+
+Exact commands, streaming (MediaMTX fed by rpicam-vid) and detection: [pi5-drone-vision](https://github.com/Ivanlim556/pi5-drone-vision).
+
 ## Files
 
 | File | What |
@@ -41,7 +54,8 @@ from below, as in the photo of the back.
 | `fabrication/BOM_ar0234-camera_PCB2_2026-09-13.xlsx` | Bill of materials, 23 lines / 55 parts, with LCSC part numbers |
 | `fabrication/PickAndPlace_PCB2_2026_09_13.xlsx` | Component placement (CPL) for assembly |
 | `fabrication/Netlist_ar0234-camera_2026-09-13.tel` | Netlist (handy for finding test points) |
-| `../../pi/ar0234/ar0234-gamuda-power-overlay.dts` | Pi 5 device-tree overlay for this board's power-up timing |
+| `raspberry-pi/ar0234-gamuda-power-overlay.dts` | Pi 5 device-tree overlay for this board's power-up timing |
+| `raspberry-pi/ar0234-force-mono.patch` | Driver patch: this mono sensor reports the colour chip ID (see bring-up note 2) |
 
 ## How it was made
 
@@ -70,8 +84,8 @@ GND at **J2 pin 3**.
 1. **Cable direction matters.** The ribbon's bare contacts must face the pads at **both** ends (blue stiffener away
    from the board at J1). The wrong way gives 0 V on C24 and `failed to read chip id`.
 2. **The mono sensor reports the colour chip ID `0x0A56`** (the driver expects `0x1A56` for mono). Raw frames prove
-   it is mono. Fix: `pi/ar0234/ar0234-force-mono.patch` + `options ar0234 force_mono=1`.
-3. Driver: Kurokesu `ar0234-rpi-dkms` + their libcamera (standard libcamera has no AR0234). Full steps: main README,
+   it is mono. Fix: `raspberry-pi/ar0234-force-mono.patch` + `options ar0234 force_mono=1`.
+3. Driver: Kurokesu `ar0234-rpi-dkms` + their libcamera (standard libcamera has no AR0234). Full steps: [pi5-drone-vision README](https://github.com/Ivanlim556/pi5-drone-vision#2-ar0234-main),
    "AR0234 setup (v2.0)".
 
 ## Boards tested (2026-10-07)
@@ -183,6 +197,6 @@ minimal parallax.
 ### 7. Software notes that come from the hardware
 
 - The fitted mono part reports the **colour** chip ID `0x0A56`; until the driver learns the difference, the
-  `force_mono` patch stays (see `pi/ar0234/`).
+  `force_mono` patch stays (see `raspberry-pi/`).
 - The 35 ms power-up delay lives in a device-tree overlay. A supervisor that holds RESET_BAR low until +1V2 is good
   would make the board independent of that overlay.

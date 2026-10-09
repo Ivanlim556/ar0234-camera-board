@@ -1,0 +1,22 @@
+--- a/ar0234.c	2026-10-05 13:24:07.770095947 +0800
++++ b/ar0234.c	2026-10-05 13:24:07.784110896 +0800
+@@ -29,6 +29,10 @@
+ MODULE_PARM_DESC(trigger_mode,
+ 		 "Set trigger mode: 0=off, 1=external-trigger, 2=sync-sink");
+ 
++static bool force_mono;
++module_param(force_mono, bool, 0444);
++MODULE_PARM_DESC(force_mono, "Treat the sensor as monochrome whatever its chip id says");
++
+ /* Registers */
+ #define AR0234_REG_CHIP_ID CCI_REG16(0x3000)
+ #define AR0234_REG_Y_ADDR_START CCI_REG16(0x3002)
+@@ -1088,7 +1092,7 @@
+ 		return dev_err_probe(ar0234->dev, ret,
+ 				     "failed to read chip id\n");
+ 
+-	if (reg_val == AR0234_CHIP_ID_MONO)
++	if (reg_val == AR0234_CHIP_ID_MONO || force_mono)
+ 		ar0234->monochrome = true;
+ 	else if (reg_val != AR0234_CHIP_ID)
+ 		return dev_err_probe(ar0234->dev, -EIO,
